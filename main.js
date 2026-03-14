@@ -6,9 +6,7 @@ const fs = require("fs");
 // endTime: (typeof string) formatted as hh:mm:ss am or hh:mm:ss pm
 // Returns: string formatted as h:mm:ss
 // ============================================================
-function getShiftDuration(startTime, endTime) {
-    
-
+function getShiftDuration(startTime, endTime) {    
     function toSeconds(time) {
 
         let parts = time.split(" ");
@@ -53,9 +51,48 @@ function getShiftDuration(startTime, endTime) {
 // Returns: string formatted as h:mm:ss
 // ============================================================
 function getIdleTime(startTime, endTime) {
-    // TODO: Implement this function
-}
+    function toSeconds(time) {
+        let parts = time.split(" ");
+        let clock = parts[0];
+        let period = parts[1];
 
+        let t = clock.split(":");
+        let hours = parseInt(t[0]);
+        let minutes = parseInt(t[1]);
+        let seconds = parseInt(t[2]);
+
+        if (period === "pm" && hours !== 12) {
+            hours += 12;
+        }
+        if (period === "am" && hours === 12){
+             hours = 0;
+        }
+
+        return hours*3600 + minutes*60 + seconds;
+    }
+
+    let start = toSeconds(startTime);
+    let end = toSeconds(endTime);
+
+    let open = toSeconds("8:00:00 am");
+    let close = toSeconds("10:00:00 pm");
+
+    let idle = 0;
+
+    if (start < open) {
+        idle += open - start;
+    }
+
+    if (end > close) {
+        idle += end - close;
+    }
+
+    let h = Math.floor(idle / 3600);
+    let m = Math.floor((idle % 3600) / 60);
+    let s = idle % 60;
+
+    return h + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+}
 // ============================================================
 // Function 3: getActiveTime(shiftDuration, idleTime)
 // shiftDuration: (typeof string) formatted as h:mm:ss
