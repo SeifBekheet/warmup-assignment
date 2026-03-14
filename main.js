@@ -293,11 +293,11 @@ function countBonusPerMonth(textFile, driverID, month) {
 
         for (let line of lines) {
             let parts = line.split(",");
-            if (parts[0] === driverID) {
+            if (parts[0] == driverID) {
                 foundDriver = true;
 
                 let lineMonth = parts[2].split("-")[1]; 
-                if (lineMonth === month.padStart(2, "0") && parts[9] == "true") {
+                if (lineMonth == month.padStart(2, "0") && parts[9] == "true") {
                     count++;
                 }
             }
