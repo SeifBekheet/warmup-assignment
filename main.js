@@ -162,7 +162,7 @@ function metQuota(date, activeTime) {
 // ============================================================
 function addShiftRecord(textFile, shiftObj) {
     try {
-        // Read existing file
+
         let data = "";
         try {
             data = fs.readFileSync(textFile, "utf8");
@@ -171,18 +171,18 @@ function addShiftRecord(textFile, shiftObj) {
         }
         let lines = data.trim() ? data.trim().split("\n") : [];
 
-        // Check for duplicate
+
         let duplicateIndex = lines.findIndex(line => {
             let parts = line.split(",");
             return parts[0] === shiftObj.driverID && parts[1] === shiftObj.date;
         });
 
-        // If duplicate exists, return empty object
+
         if (duplicateIndex !== -1) {
             return {};
         }
 
-        // Calculate derived fields
+
         let shiftDuration = getShiftDuration(shiftObj.startTime, shiftObj.endTime);
         let idleTime = getIdleTime(shiftObj.startTime, shiftObj.endTime);
         let activeTime = getActiveTime(shiftDuration, idleTime);
@@ -202,20 +202,20 @@ function addShiftRecord(textFile, shiftObj) {
             hasBonus
         ].join(",");
 
-        // Add new line
+    
         lines.push(newLine);
 
-        // Sort by date ascending
+        
         lines.sort((a, b) => {
             let dateA = a.split(",")[1];
             let dateB = b.split(",")[1];
             return new Date(dateA) - new Date(dateB);
         });
 
-        // Write back
+        
         fs.writeFileSync(textFile, lines.join("\n"));
 
-        // Return record as object
+        
         return {
             driverID: shiftObj.driverID,
             driverName: shiftObj.driverName || "",
@@ -243,7 +243,33 @@ function addShiftRecord(textFile, shiftObj) {
 // Returns: nothing (void)
 // ============================================================
 function setBonus(textFile, driverID, date, newValue) {
-    // TODO: Implement this function
+ 
+    try {
+        
+        let data = fs.readFileSync(textFile, "utf8");
+        if (!data.trim()) return; 
+
+        let lines = data.trim().split("\n");
+        let updated = false;
+
+        
+        lines = lines.map(line => {
+            let parts = line.split(",");
+            if (parts[0] === driverID && parts[2] === date) {
+                parts[8] = newValue; 
+                updated = true;
+            }
+            return parts.join(",");
+        });
+
+        if (updated) {
+            
+            fs.writeFileSync(textFile, lines.join("\n"));
+        }
+        
+    } catch (err) {
+        console.error("Error in setBonus:", err);
+    }
 }
 
 // ============================================================
