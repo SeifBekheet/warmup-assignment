@@ -436,7 +436,44 @@ function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, mont
 // Returns: integer (net pay)
 // ============================================================
 function getNetPay(driverID, actualHours, requiredHours, rateFile) {
-    // TODO: Implement this function
+
+    try {
+        let rateData = fs.readFileSync(rateFile, "utf8").trim().split("\n");
+        rateData.shift(); 
+
+        let driverRate = rateData
+            .map(line => line.split(",").map(p => p.trim()))
+            .find(parts => parts[0] === driverID);
+
+        if (!driverRate) return 0;
+
+        let baseSalary = parseFloat(driverRate[2]); 
+        let allowedMissHours = parseFloat(driverRate[3]); 
+        let allowedMissSec = allowedMissHours * 3600;
+
+        function toSeconds(timeStr) {
+            let [h, m, s] = timeStr.split(":").map(Number);
+            return h*3600 + m*60 + s;
+        }
+
+        let actualSec = toSeconds(actualHours);
+        let requiredSec = toSeconds(requiredHours);
+
+        let missingSec = requiredSec - actualSec;
+        if (missingSec <= 0) return Math.round(baseSalary); 
+
+        let excessSec = missingSec - allowedMissSec;
+        if (excessSec <= 0) return Math.round(baseSalary);
+
+        let deductionRatio = excessSec / requiredSec;
+        let netPay = baseSalary * (1 - deductionRatio);
+
+        return Math.round(netPay);
+
+    } catch (err) {
+        console.error("Error in getNetPay:", err);
+        return 0;
+    }
 }
 
 module.exports = {
