@@ -100,7 +100,25 @@ function getIdleTime(startTime, endTime) {
 // Returns: string formatted as h:mm:ss
 // ============================================================
 function getActiveTime(shiftDuration, idleTime) {
-    // TODO: Implement this function
+    function toSecondsActive(time) {
+        let parts = time.split(":");
+        let hours = parseInt(parts[0]);
+        let minutes = parseInt(parts[1]);
+        let seconds = parseInt(parts[2]);
+
+        return hours*3600 + minutes*60 + seconds;
+    }
+
+    let shift = toSecondsActive(shiftDuration);
+    let idle = toSecondsActive(idleTime);
+
+    let active = shift - idle;
+
+    let h = Math.floor(active / 3600);
+    let m = Math.floor((active % 3600) / 60);
+    let s = active % 60;
+
+    return h + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
 }
 
 // ============================================================
@@ -110,9 +128,32 @@ function getActiveTime(shiftDuration, idleTime) {
 // Returns: boolean
 // ============================================================
 function metQuota(date, activeTime) {
-    // TODO: Implement this function
-}
 
+    function toSeconds(time){
+        let parts = time.split(":");
+
+        let hours = parseInt(parts[0]);
+        let minutes = parseInt(parts[1]);
+        let seconds = parseInt(parts[2]);
+
+        return hours*3600 + minutes*60 + seconds;
+    }
+
+    let activeSeconds = toSeconds(activeTime);
+
+    let normalQuota = (8*3600) + (24*60); 
+    let eidQuota = 6*3600;
+
+    let d = new Date(date);
+    let eidStart = new Date("2025-04-10");
+    let eidEnd = new Date("2025-04-30");
+    //First check if it is currently eid,then calculate based on that fact
+    if (d >= eidStart && d <= eidEnd) {
+        return activeSeconds >= eidQuota;
+    } else {
+        return activeSeconds >= normalQuota;
+    }
+}
 // ============================================================
 // Function 5: addShiftRecord(textFile, shiftObj)
 // textFile: (typeof string) path to shifts text file
@@ -120,7 +161,77 @@ function metQuota(date, activeTime) {
 // Returns: object with 10 properties or empty object {}
 // ============================================================
 function addShiftRecord(textFile, shiftObj) {
-    // TODO: Implement this function
+    try {
+        // Read existing file
+        let data = "";
+        try {
+            data = fs.readFileSync(textFile, "utf8");
+        } catch (err) {
+            data = "";
+        }
+        let lines = data.trim() ? data.trim().split("\n") : [];
+
+        // Check for duplicate
+        let duplicateIndex = lines.findIndex(line => {
+            let parts = line.split(",");
+            return parts[0] === shiftObj.driverID && parts[1] === shiftObj.date;
+        });
+
+        // If duplicate exists, return empty object
+        if (duplicateIndex !== -1) {
+            return {};
+        }
+
+        // Calculate derived fields
+        let shiftDuration = getShiftDuration(shiftObj.startTime, shiftObj.endTime);
+        let idleTime = getIdleTime(shiftObj.startTime, shiftObj.endTime);
+        let activeTime = getActiveTime(shiftDuration, idleTime);
+        let quotaMet = metQuota(shiftObj.date, activeTime);
+        let hasBonus = false;
+
+        // Build CSV line
+        let newLine = [
+            shiftObj.driverID,
+            shiftObj.date,
+            shiftObj.startTime,
+            shiftObj.endTime,
+            shiftDuration,
+            idleTime,
+            activeTime,
+            quotaMet,
+            hasBonus
+        ].join(",");
+
+        // Add new line
+        lines.push(newLine);
+
+        // Sort by date ascending
+        lines.sort((a, b) => {
+            let dateA = a.split(",")[1];
+            let dateB = b.split(",")[1];
+            return new Date(dateA) - new Date(dateB);
+        });
+
+        // Write back
+        fs.writeFileSync(textFile, lines.join("\n"));
+
+        // Return record as object
+        return {
+            driverID: shiftObj.driverID,
+            driverName: shiftObj.driverName || "",
+            date: shiftObj.date,
+            startTime: shiftObj.startTime,
+            endTime: shiftObj.endTime,
+            shiftDuration: shiftDuration,
+            idleTime: idleTime,
+            activeTime: activeTime,
+            metQuota: quotaMet,
+            hasBonus: hasBonus
+        };
+    } catch (err) {
+        console.error("Error in addShiftRecord:", err);
+        return {};
+    }
 }
 
 // ============================================================
