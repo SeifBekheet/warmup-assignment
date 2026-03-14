@@ -297,7 +297,7 @@ function countBonusPerMonth(textFile, driverID, month) {
                 foundDriver = true;
 
                 let lineMonth = parts[2].split("-")[1]; 
-                if (lineMonth == month.padStart(2, "0") && parts[9] == "true") {
+                if (lineMonth ==month.padStart(2, "0") && parts[9] == "true") {
                     count++;
                 }
             }
@@ -318,7 +318,38 @@ function countBonusPerMonth(textFile, driverID, month) {
 // Returns: string formatted as hhh:mm:ss
 // ============================================================
 function getTotalActiveHoursPerMonth(textFile, driverID, month) {
-    // TODO: Implement this function
+  
+    try {
+        let data = fs.readFileSync(textFile, "utf8");
+        if (!data.trim()) return "0:00:00";
+
+        let lines = data.trim().split("\n");
+        lines.shift(); 
+
+        let totalSeconds = 0;
+
+        lines.forEach(line => {
+            let parts = line.split(",").map(p => p.trim());
+            if (parts[0] === driverID) {
+                let lineMonth = parseInt(parts[2].split("-")[1], 10); 
+                if (lineMonth === month) {
+                    
+                    let [h, m, s] = parts[7].split(":").map(Number);
+                    totalSeconds += h*3600 + m*60 + s;
+                }
+            }
+        });
+
+        
+        let hours = Math.floor(totalSeconds / 3600);
+        let minutes = Math.floor((totalSeconds % 3600) / 60);
+        let seconds = totalSeconds % 60;
+
+        return `${hours}:${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+    } catch (err) {
+        console.error("Error in getTotalActiveHoursPerMonth:", err);
+        return "0:00:00";
+    }
 }
 
 // ============================================================
