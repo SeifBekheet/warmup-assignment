@@ -365,7 +365,6 @@ function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, mont
  
     try {
         let rateData = fs.readFileSync(rateFile, "utf8").trim().split("\n");
-        rateData.shift(); 
 
         let driverRate = rateData
             .map(line => line.split(",").map(p => p.trim()))
@@ -439,7 +438,6 @@ function getNetPay(driverID, actualHours, requiredHours, rateFile) {
 
     try {
         let rateData = fs.readFileSync(rateFile, "utf8").trim().split("\n");
-        rateData.shift(); 
 
         let driverRate = rateData
             .map(line => line.split(",").map(p => p.trim()))
