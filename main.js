@@ -256,7 +256,7 @@ function setBonus(textFile, driverID, date, newValue) {
         lines = lines.map(line => {
             let parts = line.split(",");
             if (parts[0] === driverID && parts[2] === date) {
-                parts[8] = newValue; 
+                parts[9] = newValue; 
                 updated = true;
             }
             return parts.join(",");
@@ -282,7 +282,6 @@ function setBonus(textFile, driverID, date, newValue) {
 function countBonusPerMonth(textFile, driverID, month) {
     // TODO: Implement this function
 }
-
 // ============================================================
 // Function 8: getTotalActiveHoursPerMonth(textFile, driverID, month)
 // textFile: (typeof string) path to shifts text file
