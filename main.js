@@ -280,7 +280,35 @@ function setBonus(textFile, driverID, date, newValue) {
 // Returns: number (-1 if driverID not found)
 // ============================================================
 function countBonusPerMonth(textFile, driverID, month) {
-    // TODO: Implement this function
+    try {
+        
+        let data = fs.readFileSync(textFile, "utf8");
+        if (!data.trim()) return ; 
+
+        let lines = data.trim().split("\n");
+        lines.shift(); 
+
+        let foundDriver = false;
+        let count = 0;
+
+        for (let line of lines) {
+            let parts = line.split(",");
+            if (parts[0] === driverID) {
+                foundDriver = true;
+
+                let dateMonth = String(new Date(parts[2]).getMonth() + 1); 
+                if (dateMonth === month && parts[9] === "true") {
+                    count++;
+                }
+            }
+        }
+
+        return foundDriver ? count : -1;
+
+    } catch (err) {
+        console.error("Error in countBonusPerMonth:", err);
+        return -1;
+    }
 }
 // ============================================================
 // Function 8: getTotalActiveHoursPerMonth(textFile, driverID, month)
