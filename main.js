@@ -7,7 +7,43 @@ const fs = require("fs");
 // Returns: string formatted as h:mm:ss
 // ============================================================
 function getShiftDuration(startTime, endTime) {
-    // TODO: Implement this function
+    
+
+    function toSeconds(time) {
+
+        let parts = time.split(" ");
+        let clock = parts[0];
+        let period = parts[1];
+
+        let t = clock.split(":");
+        let hours = parseInt(t[0]);
+        let minutes = parseInt(t[1]);
+        let seconds = parseInt(t[2]);
+
+        if (period === "pm" && hours !== 12) {
+            hours += 12;
+        }
+
+        if (period === "am" && hours === 12) {
+            hours = 0;
+        }
+
+        return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    let start = toSeconds(startTime);
+    let end = toSeconds(endTime);
+
+    let difference = end - start;
+    //Handle case of difference being negative
+    if (difference < 0) {
+      difference += 24 * 3600;
+                        }
+    let h = Math.floor(difference / 3600);
+    let m = Math.floor((difference % 3600) / 60);
+    let s = difference % 60;
+
+    return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
 
 // ============================================================
