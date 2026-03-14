@@ -362,7 +362,69 @@ function getTotalActiveHoursPerMonth(textFile, driverID, month) {
 // Returns: string formatted as hhh:mm:ss
 // ============================================================
 function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, month) {
-    // TODO: Implement this function
+ 
+    try {
+        let rateData = fs.readFileSync(rateFile, "utf8").trim().split("\n");
+        rateData.shift(); 
+
+        let driverRate = rateData
+            .map(line => line.split(",").map(p => p.trim()))
+            .find(parts => parts[0] === driverID);
+
+        if (!driverRate) return "0:00:00";
+
+        let weeklyDayOff = driverRate[2]; 
+
+        let eidStart = new Date("2025-04-10");
+        let eidEnd = new Date("2025-04-30");
+
+        let shiftData = fs.readFileSync(textFile, "utf8").trim().split("\n");
+        shiftData.shift(); 
+
+        let daysSet = new Set();
+
+        shiftData.forEach(line => {
+            let parts = line.split(",").map(p => p.trim());
+            if (parts[0] === driverID) {
+                let [year, mon, day] = parts[2].split("-").map(Number);
+                if (mon === month) {
+                    daysSet.add(parts[2]);
+                }
+            }
+        });
+
+        if (daysSet.size === 0) return "0:00:00";
+
+        let totalSeconds = 0;
+
+        for (let dateStr of daysSet) {
+            let [y, m, d] = dateStr.split("-").map(Number);
+            let dt = new Date(y, m-1, d);
+
+            let dayName = dt.toLocaleString("en-US", { weekday: "long" });
+            if (dayName === weeklyDayOff) continue; 
+
+            // Check to see if month is in eid
+            let dailySeconds = (dt >= eidStart && dt <= eidEnd) ? 6*3600 : 8*3600 + 24*60; 
+
+            totalSeconds += dailySeconds;
+        }
+
+        let dailyNormalSeconds = 8*3600 + 24*60; 
+        totalSeconds -= bonusCount * dailyNormalSeconds;
+
+        if (totalSeconds < 0) totalSeconds = 0;
+
+        let hours = Math.floor(totalSeconds / 3600);
+        let minutes = Math.floor((totalSeconds % 3600) / 60);
+        let seconds = totalSeconds % 60;
+
+        return `${hours}:${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+
+    } catch (err) {
+        console.error("Error in getRequiredHoursPerMonth:", err);
+        return "0:00:00";
+    }
 }
 
 // ============================================================
